@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon id="plugin.video.tk_bbl" name="Telekom Basketball" version="1.0.1" provider-name="hubsif">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.mechanize" version="0.2.5"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
+        <summary lang="de">Videos von www.telekombasketball.de ansehen</summary>
+        <summary lang="en">Watch videos from www.telekombasketball.de</summary>
+        <description lang="de">Video Portal der Telekom zu Beko BBL mit allen Spielen live und als Wiederholung. Um die Videos sehen zu können, ist eine Registrierung bei www.telekombasketball.de nötig, die für Telekomkunden mit Flatrate kostenlos ist.</description>
+        <description lang="en">Watch all videos of Beko BBL matches from www.telekombasketball.de. In order to access the videos, you need to register at www.telekombasketball.de, which is for free for flatrate customers of German Telekom.</description>
+    </extension>
+</addon>
