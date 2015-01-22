@@ -4,7 +4,7 @@ Kodi (XBMC) Telekom Basketball Addon
 About
 -----
 
-This addon let's you watch the Basketball streams from [Telekom Basketball] [1].
+This addon let's you watch the German Basketball (Beko BBL) streams from [Telekom Basketball] [1].
 It's a quick hack I wrote for a friend, so there might be issues, as it's not
 well tested.
 
@@ -13,7 +13,7 @@ Prerequisites
 
 In order to use this plugin you need to register at [Telekom Basketball]
 [1], which is for free for Deutsche Telekom customers with either a mobile
-flatrate or a internet flatrate contract.
+flatrate or an internet flatrate contract.
 
 Usage
 -----
