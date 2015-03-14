@@ -1,3 +1,6 @@
+1.0.3 (2015/03/14)
+- show live games in main menu
+
 1.0.2 (2015/03/14)
 - fix auth for live streaming
 

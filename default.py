@@ -62,6 +62,20 @@ args = urlparse.parse_qs(sys.argv[2][1:])
 mode = args.get('mode', None)
 
 if mode is None:
+    # load live games
+    browser.open("https://www.telekombasketball.de/feed/getTeaser.php")
+    response = browser.response().read()
+    xmlroot = ET.ElementTree(ET.fromstring(response))
+    
+    for video in xmlroot.getiterator('VIDEO'):
+        if video.get('ISLIVESTREAM') == 'true' and video.get('ISLIVE') == 'true':
+            url = build_url({'mode': '3', 'id': video.get('ID'), 'scheduled_start': video.get('scheduled_start')})
+            li = xbmcgui.ListItem(video.find('TITLE').text, iconImage=video.find('GAME_IMG').text, thumbnailImage=video.find('GAME_IMG').text)
+            li.setProperty('fanart_image', video.find('IMAGE_ORIGINAL').text)
+            li.setProperty('IsPlayable', 'true')
+            xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
+
+    # load menu
     browser.open("https://www.telekombasketball.de/feed/getFilter.php")
     response = browser.response().read()
     jsonResult = json.loads(response)
@@ -71,7 +85,7 @@ if mode is None:
         li = xbmcgui.ListItem(rounds['text'], iconImage='DefaultFolder.png')
         xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li, isFolder=True)
 
-    # add specials        
+    # load specials        
     url = build_url({'mode': '2', 'featured': True})
     li = xbmcgui.ListItem("Featured", iconImage='DefaultFolder.png')
     xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li, isFolder=True) 
