@@ -149,6 +149,7 @@ elif mode[0] == '3':
             response = browser.response().read()
             xmlroot = ET.ElementTree(ET.fromstring(response))
             playlisturl = xmlroot.find('token').get('url')
+            auth = xmlroot.find('token').get('auth')
             
-            listitem = xbmcgui.ListItem(path=playlisturl)
+            listitem = xbmcgui.ListItem(path=playlisturl + "?hdnea=" + auth)
             xbmcplugin.setResolvedUrl(_addon_handler, True, listitem)
