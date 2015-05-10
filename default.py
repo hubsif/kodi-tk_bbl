@@ -125,15 +125,51 @@ elif mode[0] == '2':
     xmlroot = ET.ElementTree(ET.fromstring(response))
         
     for video in xmlroot.getiterator('VIDEO'):
-        url = build_url({'mode': '3', 'id': video.get('ID'), 'scheduled_start': video.get('scheduled_start')})
-        li = xbmcgui.ListItem(video.find('TITLE').text, iconImage=video.find('GAME_IMG').text, thumbnailImage=video.find('GAME_IMG').text)
-        li.setProperty('fanart_image', video.find('IMAGE_ORIGINAL').text)
-        li.setProperty('IsPlayable', 'true')
-        xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
-
+        if video.get('ISLIVESTREAM') == 'false':
+            url = build_url({
+                'mode': '3',
+                'id': video.get('ID'),
+                'scheduled_start': video.get('scheduled_start'),
+                'iconImage': video.find('GAME_IMG').text,
+                'thumbnailImage': video.find('GAME_IMG').text,
+                'fanart_image': video.find('IMAGE_ORIGINAL').text,
+                'type': video.find('MEDIATYPE').text,
+                'teama': video.find('TEAMA').get('id'),
+                'teamb': video.find('TEAMB').get('id'),
+                'round': video.find('ROUND').get('id')})
+            li = xbmcgui.ListItem(video.find('TEAMA').text + ' - ' + video.find('TEAMB').text, iconImage=video.find('GAME_IMG').text, thumbnailImage=video.find('GAME_IMG').text)
+            li.setProperty('fanart_image', video.find('IMAGE_ORIGINAL').text)
+            xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li, isFolder=True)
+        else:
+            url = build_url({'mode': '4', 'id': video.get('ID'), 'scheduled_start': video.get('scheduled_start')})
+            li = xbmcgui.ListItem(video.find('TITLE').text, iconImage=video.find('GAME_IMG').text, thumbnailImage=video.find('GAME_IMG').text)
+            li.setProperty('fanart_image', video.find('IMAGE_ORIGINAL').text)
+            li.setProperty('IsPlayable', 'true')
+            xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
+            
     xbmcplugin.endOfDirectory(_addon_handler)
 
 elif mode[0] == '3':
+    url = build_url({'mode': '4', 'id': args['id'][0], 'scheduled_start': args['scheduled_start'][0]})
+    li = xbmcgui.ListItem(args['type'][0], iconImage=args['iconImage'][0], thumbnailImage=args['thumbnailImage'][0])
+    li.setProperty('fanart_image', args['fanart_image'][0])
+    li.setProperty('IsPlayable', 'true')
+    xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
+
+    browser.open("https://www.telekombasketball.de/feed/app_video.feed.php?targetID=8,20&id=" + args['id'][0] + "&records=21")
+    response = browser.response().read()
+    xmlroot = ET.ElementTree(ET.fromstring(response))
+    for video in xmlroot.getiterator('VIDEO'):
+        if video.find('TEAMA').get('id') == args['teama'][0] and video.find('TEAMB').get('id') == args['teamb'][0] and video.find('ROUND').get('id') == args['round'][0]:
+            url = build_url({'mode': '4', 'id': video.get('ID'), 'scheduled_start': video.get('scheduled_start')})
+            li = xbmcgui.ListItem(video.find('MEDIATYPE').text, iconImage=video.find('GAME_IMG').text, thumbnailImage=video.find('GAME_IMG').text)
+            li.setProperty('fanart_image', video.find('IMAGE_ORIGINAL').text)
+            li.setProperty('IsPlayable', 'true')
+            xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
+        
+    xbmcplugin.endOfDirectory(_addon_handler)
+
+elif mode[0] == '4':
     if not _addon.getSetting('username'):
         xbmcgui.Dialog().ok(_addon_name, __language__(30003))
         _addon.openSettings()
