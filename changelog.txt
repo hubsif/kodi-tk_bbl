@@ -1,3 +1,10 @@
+1.1.0 (2015/05/10)
+- use mechanize only where needed
+- show all related videos of past games
+- remove compiled python bytecode
+- fix urllib ssl issue
+- remove wrong dependency
+
 1.0.3 (2015/03/14)
 - show live games in main menu
 
