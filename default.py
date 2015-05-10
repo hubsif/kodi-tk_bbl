@@ -52,12 +52,21 @@ import datetime
 datetime.datetime.now()
 datetime.datetime.utcnow()
 
-
-
-
 browser = mechanize.Browser()
 browser.set_handle_robots(False)
 
+# urllib ssl fix
+import ssl
+from functools import wraps
+def sslwrap(func):
+    @wraps(func)
+    def bar(*args, **kw):
+        kw['ssl_version'] = ssl.PROTOCOL_TLSv1
+        return func(*args, **kw)
+    return bar
+ssl.wrap_socket = sslwrap(ssl.wrap_socket)
+
+# get arguments
 args = urlparse.parse_qs(sys.argv[2][1:])
 mode = args.get('mode', None)
 
