@@ -72,8 +72,7 @@ mode = args.get('mode', None)
 
 if mode is None:
     # load live games
-    browser.open("https://www.telekombasketball.de/feed/getTeaser.php")
-    response = browser.response().read()
+    response = urllib.urlopen("https://www.telekombasketball.de/feed/getTeaser.php").read()
     xmlroot = ET.ElementTree(ET.fromstring(response))
     
     for video in xmlroot.getiterator('VIDEO'):
@@ -85,8 +84,7 @@ if mode is None:
             xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
 
     # load menu
-    browser.open("https://www.telekombasketball.de/feed/getFilter.php")
-    response = browser.response().read()
+    response = urllib.urlopen("https://www.telekombasketball.de/feed/getFilter.php").read()
     jsonResult = json.loads(response)
     
     for rounds in jsonResult['children']:
@@ -102,8 +100,7 @@ if mode is None:
     xbmcplugin.endOfDirectory(_addon_handler)
 
 elif mode[0] == '1':
-    browser.open("https://www.telekombasketball.de/feed/getFilter.php")
-    response = browser.response().read()
+    response = urllib.urlopen("https://www.telekombasketball.de/feed/getFilter.php").read()
     jsonResult = json.loads(response)
     
     round = args['text'][0]
@@ -118,10 +115,9 @@ elif mode[0] == '1':
 
 elif mode[0] == '2':
     if args.has_key('featured'):
-        browser.open("https://www.telekombasketball.de/feed/getFeatured.php")
+        response = urllib.urlopen("https://www.telekombasketball.de/feed/getFeatured.php").read()
     else:
-        browser.open("https://www.telekombasketball.de/feed/app_video.feed.php?targetID=8,20&" + args['href'][0])
-    response = browser.response().read()
+        response = urllib.urlopen("https://www.telekombasketball.de/feed/app_video.feed.php?targetID=8,20&" + args['href'][0]).read()
     xmlroot = ET.ElementTree(ET.fromstring(response))
         
     for video in xmlroot.getiterator('VIDEO'):
@@ -156,8 +152,7 @@ elif mode[0] == '3':
     li.setProperty('IsPlayable', 'true')
     xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
 
-    browser.open("https://www.telekombasketball.de/feed/app_video.feed.php?targetID=8,20&id=" + args['id'][0] + "&records=21")
-    response = browser.response().read()
+    response = urllib.urlopen("https://www.telekombasketball.de/feed/app_video.feed.php?targetID=8,20&id=" + args['id'][0] + "&records=21").read()
     xmlroot = ET.ElementTree(ET.fromstring(response))
     for video in xmlroot.getiterator('VIDEO'):
         if video.find('TEAMA').get('id') == args['teama'][0] and video.find('TEAMB').get('id') == args['teamb'][0] and video.find('ROUND').get('id') == args['round'][0]:
