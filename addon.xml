@@ -2,7 +2,6 @@
 <addon id="plugin.video.tk_bbl" name="Telekom Basketball" version="1.0.3" provider-name="hubsif">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
-        <import addon="script.module.mechanize" version="0.2.5"/>
     </requires>
     <extension point="xbmc.python.pluginsource" library="default.py">
         <provides>video</provides>
