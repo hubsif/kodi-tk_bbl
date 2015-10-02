@@ -26,7 +26,7 @@ _addon         = xbmcaddon.Addon(id=_addon_id)
 _addon_name    = _addon.getAddonInfo('name')
 _addon_handler = int(sys.argv[1])
 _addon_url     = sys.argv[0]
-_addon_path    = _addon.getAddonInfo('path').decode(sys.getfilesystemencoding())
+_addon_path    = xbmc.translatePath(_addon.getAddonInfo("path") )
 __language__   = _addon.getLocalizedString
  
 sys.path.append(os.path.join(_addon_path, 'resources', 'lib'))

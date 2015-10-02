@@ -1,3 +1,6 @@
+1.1.1 (2015/10/02)
+- change addon path translation method
+
 1.1.0 (2015/05/10)
 - use mechanize only where needed
 - show all related videos of past games
