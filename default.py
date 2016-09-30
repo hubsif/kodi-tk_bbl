@@ -43,6 +43,16 @@ xbmcplugin.setContent(_addon_handler, 'videos')
 def build_url(query):
     return _addon_url + '?' + urllib.urlencode(query)
 
+def get_current(json):
+    if 'isCurrent' in json and json['isCurrent'] == 'true':
+        if json['children']:
+            for child in json['children']:
+                result = get_current(child)
+                if result:
+                    return result
+        else:
+            return json['href']
+
 
 ##############
 # main routine
@@ -71,22 +81,23 @@ args = urlparse.parse_qs(sys.argv[2][1:])
 mode = args.get('mode', None)
 
 if mode is None:
-    # load live games
-    response = urllib.urlopen("https://www.telekombasketball.de/feed/getTeaser.php").read()
-    xmlroot = ET.ElementTree(ET.fromstring(response))
-    
-    for video in xmlroot.getiterator('VIDEO'):
-        if video.get('ISLIVESTREAM') == 'true' and video.get('ISLIVE') == 'true':
-            url = build_url({'mode': '3', 'id': video.get('ID'), 'scheduled_start': video.get('scheduled_start')})
-            li = xbmcgui.ListItem(video.find('TITLE').text, iconImage=video.find('GAME_IMG').text, thumbnailImage=video.find('GAME_IMG').text)
-            li.setProperty('fanart_image', video.find('IMAGE_ORIGINAL').text)
-            li.setProperty('IsPlayable', 'true')
-            xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
-
     # load menu
     response = urllib.urlopen("https://www.telekombasketball.de/feed/getFilter.php").read()
     jsonResult = json.loads(response)
-    
+
+    # load live games
+    live_target = get_current(jsonResult)
+    if live_target:
+        response = urllib.urlopen("https://www.telekombasketball.de/feed/getHomeFeed.php?targetID=8,20&template=2015&" + live_target).read()
+        xmlroot = ET.ElementTree(ET.fromstring(response))
+        for video in xmlroot.getiterator('VIDEO'):
+            if video.get('ISLIVESTREAM') == 'true' and video.get('ISLIVE') == 'true':
+                url = build_url({'mode': '4', 'id': video.get('ID'), 'scheduled_start': video.get('scheduled_start')})
+                li = xbmcgui.ListItem(video.find('TITLE').text, iconImage=video.find('GAME_IMG').text, thumbnailImage=video.find('GAME_IMG').text)
+                li.setProperty('fanart_image', video.find('IMAGE_ORIGINAL').text)
+                li.setProperty('IsPlayable', 'true')
+                xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
+
     for rounds in jsonResult['children']:
         url = build_url({'mode': '1', 'text': rounds['text']})
         li = xbmcgui.ListItem(rounds['text'], iconImage='DefaultFolder.png')
@@ -187,7 +198,7 @@ elif mode[0] == '4':
             state = str(time) + str(rand);
 
             browser.open("https://www.telekombasketball.de")
-            browser.open("https://accounts.login.idm.telekom.com/oauth2/auth?response_type=code&client_id=10LIVESAM30000004901BEKOBBL0000000000000&scope=openid&redirect_uri=http:%2F%2Fwww.telekombasketball.de%2Foauth.php%3Frequest%3Dlogin%26headto%3Dhttp:%2F%2Fwww.telekombasketball.de%2F&state="+state+"&claims=%7B%22id_token%22%3A%7B%22urn%3Atelekom.com%3Aall%22%3Anull%7D%7D")
+            browser.open("https://www.telekombasketball.de/service/oauth/login.php?headto=https://www.telekombasketball.de")
 
             browser.select_form(name="login")
             browser.form['pw_usr'] = _addon.getSetting('username')
