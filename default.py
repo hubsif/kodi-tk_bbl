@@ -45,7 +45,7 @@ def build_url(query):
 
 def get_current(json):
     if 'isCurrent' in json and json['isCurrent'] == 'true':
-        if json['children']:
+        if json.has_key('children'):
             for child in json['children']:
                 result = get_current(child)
                 if result:
