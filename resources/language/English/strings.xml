@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <strings>
-	<string id="30000">Username</string>
-	<string id="30001">Password</string>
-	<string id="30002">Video Quality</string>
-	<string id="30003">Missing login data! Please define username and password first.</string>
-	<string id="30004">Stream starts at:</string>
+        <string id="30000">Username</string>
+        <string id="30001">Password</string>
+        <string id="30002">Enable automatic media view for streaming pages</string>
+        <string id="30003">View number</string>
+        <string id="31001">Missing login data! Please define username and password first.</string>
+        <string id="31002">Stream starts at:</string>
+        <string id="31003">In order to view this video you need to book the Telekom Basketball subscription (also required for Telekom customers (for free))</string>
 </strings>

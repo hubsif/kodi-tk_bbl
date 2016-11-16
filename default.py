@@ -27,14 +27,15 @@ _addon_name    = _addon.getAddonInfo('name')
 _addon_handler = int(sys.argv[1])
 _addon_url     = sys.argv[0]
 _addon_path    = xbmc.translatePath(_addon.getAddonInfo("path") )
+_images_path   = _addon_path + "/resources/images/"
 __language__   = _addon.getLocalizedString
  
 sys.path.append(os.path.join(_addon_path, 'resources', 'lib'))
 import mechanize
 
-# don't know if that's needed, as it is already defined in addon.xml
-xbmcplugin.setContent(_addon_handler, 'videos')
+xbmcplugin.setContent(_addon_handler, 'movies')
 
+dtformat = '%Y-%m-%d %H:%M:%S'
 
 ###########
 # functions
@@ -43,12 +44,26 @@ xbmcplugin.setContent(_addon_handler, 'videos')
 def build_url(query):
     return _addon_url + '?' + urllib.urlencode(query)
 
+def convertdatetime(dt, sourceformat):
+    try:
+        return datetime.strptime(dt, sourceformat)
+    except TypeError:
+        return datetime(*(time.strptime(dt, sourceformat)[0:6]))
+
+def prettydate(dt, addtime=True):    
+    if addtime:
+        return dt.strftime(xbmc.getRegion("datelong") + ", " + xbmc.getRegion("time").replace(":%S", "").replace("%H%H", "%H"))
+    else:
+        return dt.strftime(xbmc.getRegion("datelong"))
+
+def getseconds(timestr):
+    return sum(int(x) * 60 ** i for i,x in enumerate(reversed(timestr.split(":"))))
 
 ##############
 # main routine
 ##############
 
-import datetime
+from datetime import datetime
 
 browser = mechanize.Browser()
 browser.set_handle_robots(False)
@@ -65,77 +80,105 @@ def sslwrap(func):
 ssl.wrap_socket = sslwrap(ssl.wrap_socket)
 
 # get arguments
-args = urlparse.parse_qs(sys.argv[2][1:])
+args = dict(urlparse.parse_qsl(sys.argv[2][1:]))
 mode = args.get('mode', None)
 
-# main menu, showing 'mediatypes'
+# main menu, show 'mediatypes'
 if mode is None:
     # load menu
-    response = urllib.urlopen("https://www.telekombasketball.de/feeds/appfeed.php?type=videolist").read()
+    response = urllib.urlopen("http://appsdata.laola1.at/data/telekomsport/ios/basketball/2_0_0/config.json").read()
     jsonResult = json.loads(response)
 
-    for mediatype in jsonResult['mediatypes']:
-        url = build_url({'mode': '1', 'mediatype_id': mediatype['id']})
-        li = xbmcgui.ListItem(mediatype['title'].title(), iconImage='DefaultFolder.png')
-        xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li, isFolder=True)
+    # TODO: add error handling (if not existent)
+    video_pages = [jsonResult['contentPages'][x] for x in jsonResult['content_items']['videos']['contentPages']]
+    cms_base = jsonResult['contentDetails']['Base']['cms_base']
+    video_url = jsonResult['contentDetails']['videolist']['url'].replace('{{{cms_base}}}', cms_base)
+    
+    for key, content_item in jsonResult['content_items'].iteritems():
+        if 'leagueId' in content_item:
+            url = build_url({'mode': 'content_item', 'content_item': json.dumps(content_item), 'video_pages': json.dumps(video_pages), 'video_url': video_url})
+            li = xbmcgui.ListItem(content_item['title'], iconImage=_images_path + content_item['title'].lower() +'.png')
+            xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li, isFolder=True)
         
     xbmcplugin.endOfDirectory(_addon_handler)
 
-# submenu, showing video items
-elif mode[0] == '1':
-    page = 1
+elif mode == 'content_item':
+    video_pages = json.loads(args['video_pages'])
+    
+    for video_page in video_pages:
+        url = build_url({'mode': 'video_page', 'video_page': json.dumps(video_page), 'content_item': args['content_item'], 'video_url': args['video_url'], 'page': 1})
+        li = xbmcgui.ListItem(video_page['title'], iconImage='DefaultFolder.png')
+        xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li, isFolder=True)
+    
+    xbmcplugin.endOfDirectory(_addon_handler)
 
-    while True:
-        response = urllib.urlopen("https://www.telekombasketball.de/feeds/appfeed.php?type=videolist&mediatype="+args['mediatype_id'][0]+"&page="+str(page)).read()
-        jsonResult = json.loads(response)
+elif mode == 'video_page':
+    video_page = json.loads(args['video_page'])
+    content_item = json.loads(args['content_item'])
+    video_url = args['video_url']
+    page = args['page']
+    
+    video_url = video_url.replace('@@@mediatype@@@', video_page['mediatype'])
+    video_url = video_url.replace('@@@page@@@', page)
+    video_url = video_url.replace('@@@organization@@@', content_item['leagueId'])
+    video_url = video_url.replace('@@@category@@@', video_page.get('category', ""))
+    
+    response = urllib.urlopen(video_url).read()
+    jsonResult = json.loads(response)
+    
+    videoday = None;
+    for content in jsonResult['content']:
+        scheduled_start = convertdatetime(content['scheduled_start'], dtformat)
+        if videoday is None or (video_page['viewModel'] != "live" and scheduled_start.date() < videoday) or (video_page['viewModel'] == "live" and scheduled_start.date() > videoday):
+        #if (video_page['viewModel'] != "live" and (videoday is None or scheduled_start.date() < videoday)) or (video_page['viewModel'] == "live" and (videoday is None or scheduled_start.date() > videoday)):
+            li = xbmcgui.ListItem("[COLOR yellow]" + prettydate(scheduled_start, False) + "[/COLOR]")
+            li.setProperty("IsPlayable", "false")
+            xbmcplugin.addDirectoryItem(handle=_addon_handler, url="", listitem=li)
+            videoday = scheduled_start.date()
+    
+        # TODO: get urls from config
+        url = build_url({'mode': 'content', 'id': content['id'], 'scheduled_start': content['scheduled_start'], 'isPay': content['isPay'], 'thumbnailImage': 'https://www.telekombasketball.de' + content['teaser_image_small']})
+        li = xbmcgui.ListItem(content['title_long'].split('|')[0], iconImage='https://www.telekombasketball.de' + content['teaser_image_small'])
+        li.setProperty('fanart_image', 'https://www.telekombasketball.de' + content['teaser_image_big'])
+        duration = getseconds(content['duration']) if content['duration'] else 0
+        li.setInfo( "video", { "plot": content['round_1'] + ", " + content['round_2'] + "[CR]" + prettydate(scheduled_start), "duration": duration } )
+        li.setProperty('IsPlayable', 'true')
+        xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
 
-        for content in jsonResult['content']:
-            url = build_url({'mode': '4', 'id': content['id'], 'scheduled_start': content['scheduled_start'], 'isPay': content['isPay'], 'thumbnailImage': 'https://www.telekombasketball.de' + content['teaser_image_small']})
-            li = xbmcgui.ListItem(content['title_long'].split('|')[0], iconImage='https://www.telekombasketball.de' + content['teaser_image_small'])
-            li.setProperty('fanart_image', 'https://www.telekombasketball.de' + content['teaser_image_big'])
-            li.setProperty('IsPlayable', 'true')
-            xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li)
+    if int(page) < jsonResult['total_pages']:
+        args['page'] = str(int(args['page']) + 1)
+        url = build_url(args)
+        li = xbmcgui.ListItem('mehr ...')
+        xbmcplugin.addDirectoryItem(handle=_addon_handler, url=url, listitem=li, isFolder=True)
 
-        # only load max 10 pages for now
-        if page < jsonResult['total_pages'] and page < 10:
-            page += 1
-        else:
-           break
-
+    if _addon.getSetting('autoview'):
+        xbmc.executebuiltin("Container.SetViewMode(%s)" % _addon.getSetting('mediaview'))
+        
     xbmcplugin.endOfDirectory(_addon_handler)
 
 # stream selected video
-elif mode[0] == '4':
-    scheduled_start = args['scheduled_start'][0]
-    now = datetime.datetime.now()
-    format = '%Y-%m-%d %H:%M:%S'
-    try:
-        start = datetime.datetime.strptime(scheduled_start, format)
-    except TypeError:
-        start = datetime.datetime(*(time.strptime(scheduled_start, format)[0:6]))
+elif mode == 'content':
+    scheduled_start = convertdatetime(args['scheduled_start'], dtformat)
+    now = datetime.now()
 
-    # 'scheduled_start' reflects beginning of game, stream starts 15 minutes earlier
-    start = start - datetime.timedelta(minutes=15)
-
-    if now < start:
-        xbmcgui.Dialog().ok(_addon_name, __language__(30004), "", str(start))
+    if now < scheduled_start:
+        xbmcgui.Dialog().ok(_addon_name, __language__(31002), "", prettydate(scheduled_start))
     else:
-        if args['isPay'][0] == 'True':
+        if args['isPay'] == 'True':
             if not _addon.getSetting('username'):
-                xbmcgui.Dialog().ok(_addon_name, __language__(30003))
+                xbmcgui.Dialog().ok(_addon_name, __language__(31001))
                 _addon.openSettings()
             else:
-                browser.open("https://www.telekombasketball.de/service/oauth/login.php?headto=https://www.telekomeishockey.de/del")
+                browser.open("https://www.telekombasketball.de/service/oauth/login.php?headto=https://www.telekombasketball.de/")
                 browser.select_form(name="login")
                 browser.form['pw_usr'] = _addon.getSetting('username')
                 browser.form['pw_pwd'] = _addon.getSetting('password')
                 browser.submit()
         
-        browser.open("https://www.telekombasketball.de/videoplayer/player.php?play=" + args['id'][0])
+        browser.open("https://www.telekombasketball.de/videoplayer/player.php?play=" + args['id'])
         response = browser.response().read()
-        
         if 'class="subscription_error"' in response:
-            xbmcgui.Dialog().ok(_addon_name, __language__(30005))
+            xbmcgui.Dialog().ok(_addon_name, __language__(31003))
             sys.exit(0)
             
         mobileUrl = re.search('mobileUrl: \"(.*?)\"', response).group(1)
@@ -147,5 +190,5 @@ elif mode[0] == '4':
         playlisturl = xmlroot.find('token').get('url')
         auth = xmlroot.find('token').get('auth')
         
-        listitem = xbmcgui.ListItem(path=playlisturl + "?hdnea=" + auth, thumbnailImage=args['thumbnailImage'][0])
+        listitem = xbmcgui.ListItem(path=playlisturl + "?hdnea=" + auth, thumbnailImage=args['thumbnailImage'])
         xbmcplugin.setResolvedUrl(_addon_handler, True, listitem)

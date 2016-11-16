@@ -2,8 +2,9 @@
 <strings>
 	<string id="30000">Benutzername</string>
 	<string id="30001">Passwort</string>
-	<string id="30002">Videoqualität</string>
-	<string id="30003">Login Daten fehlen! Bitte erst Benutzername und Passwort festlegen.</string>
-	<string id="30004">Stream startet um:</string>
-	<string id="30005">Um diese Video sehen zu können, müssen Sie ein Telekom Basketball Abo gebucht haben (muss auch von Telekom-Kunden (kostenlos) durchgeführt werden).</string>
+	<string id="30002">automatische Medienansicht für Stream-Seiten aktivieren</string>
+	<string id="30003">View Nummer</string>
+	<string id="31001">Login Daten fehlen! Bitte erst Benutzername und Passwort festlegen.</string>
+	<string id="31002">Stream startet am:</string>
+	<string id="31003">Um dieses Video sehen zu können, müssen Sie ein Telekom Basketball Abo gebucht haben (muss auch von Telekom-Kunden (kostenlos) durchgeführt werden).</string>
 </strings>

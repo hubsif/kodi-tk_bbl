@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.tk_bbl" name="Telekom Basketball" version="2.2.0~alpha" provider-name="hubsif">
+<addon id="plugin.video.tk_bbl" name="Telekom Basketball" version="2.2.0~beta" provider-name="hubsif">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
-        <import addon="script.module.oauth.helper" version="0.0.7"/>
     </requires>
     <extension point="xbmc.python.pluginsource" library="default.py">
         <provides>video</provides>

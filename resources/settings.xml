@@ -3,5 +3,8 @@
 	<category label="General">
 		<setting id="username" type="text" label="30000" default="" />
 		<setting id="password" type="text" option="hidden" label="30001" enable="!eq(-1,)" default="" />
+		<setting type="sep" />
+		<setting default="true" id="autoview" label="30002" type="bool" />
+		<setting default="515" enable="!eq(-1,false)" id="mediaview" label="30003" type="number" />
 	</category>
 </settings>
